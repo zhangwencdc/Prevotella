@@ -1,0 +1,14 @@
+P1	#7FC97F	Accent
+P2	#BEAED4	Accent
+P3	#FDC086	Accent
+P4	#FFFF99	Accent
+P5	#386CB0	Accent
+P6	#F0027F	Accent
+P7	#BF5B17	Accent
+China	#1B9E77	Dark2
+HMP	#D95F02	Dark2
+Beijing	#7570B3	Dark2
+Henan	#E7298A	Dark2
+Jiangsu	#66A61E	Dark2
+Sichuan	#E6AB02	Dark2
+Positive	#1B9E77

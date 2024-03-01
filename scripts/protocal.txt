@@ -1,0 +1,58 @@
+(1)Kraekn2+Bracken	"perl wgsqc_micro-v2.pl -Assemble -VF -Res -Virus -1  /home/zhangwen/project/2022Time/WGS_Data/Time_New/21ZYK6.fq1.filter.fq -2 /home/zhangwen/project/2022Time/WGS_Data/Time_New/21ZYK6.fq2.filter.fq  -K  21ZYK6
+"						
+(2)Figure	perl Kraken_Species.pl -G Bacteroides -D ID.txt						
+							
+(3)Metaphlab+Strainphlan	merge_metaphlan_tables.py *.tsv >WGS_merge.metaphlan						"strainphlan -m /home/zhangwen/Data/Metaphlan/marker_db/Prevotella_copri.markers.fa -s *.pkl -o ./ -n 8 -c Prevotella_copri --mutation_rates
+"
+	perl Metaphlan_Species.pl -I WGS_merge.metaphlan -D ID.txt -G Prevotella  -O Prevotella -Tag Metaphlan						
+	strainphlan -m /home/zhangwen/Data/Metaphlan/marker_db/Prevotella_copri.markers.fa -s consensus_markers/*.pkl -o ./ -n 8 --mutation_rates -c Prevotella_copri -o Prevotella_copri						
+(4)Samestr	conda activate Samestr	metaphlan /home/zhangwen/Data/HMP_Data/Fastq/${ID}.denovo_duplicates_marked.trimmed.1.fastq --bowtie2db /home/zhangwen/Data/Metaphlan/ --input_type fastq --nproc 30 --legacy-output -t rel_ab --bowtie2out ${ID}.bowtieout --samout ${ID}.sam.bz2 -o ${ID}.profile.txt					
+	samestr convert --input-files sams/*sam.bz2 --marker-dir /home/zhangwen/Data/Samestr/ --min-vcov 5 --nprocs 30 --output-dir out_convert/  --mp-profiles-dir profiles/ --mp-profiles-extension .profile.tsv						
+	samestr merge --input-files  */*/Prevotella*.npy  --nprocs 30 --output-dir Prevotella						
+	"samestr filter --input-files Prevotella/*.npy --input-names Prevotella/*.names.txt --marker-dir /home/zhangwen/Data/Samestr// --samples-min-n-hcov 5000 --species-min-samples 2 --marker-trunc-len 20 --global-pos-min-n-vcov 2 --sample-pos-min-n-vcov 5 --sample-var-min-f-vcov 0.1 --nprocs 30 --output-dir Prevotella-filter/
+"						
+	"samestr compare \
+--input-files Prevotella-filter/*.npy \
+--input-names Prevotella-filter/*.names.txt \
+--nprocs 30 \
+--output-dir Prevotella-compare/"						
+	samestr summarize --input-dir Prevotella-compare/ --mp-profiles-dir ../Metaphlan/profiles/ --output-dir Prevotella-summarize/ --mp-profiles-extension .profile.tsv						
+	"samestr summarize \
+--input-dir Prevotella-compare/ \
+--mp-profiles-dir profile/ \
+--output-dir Prevotella-summarize/"	Prevotella-summarize/sstr_data.tsv为最终结果					
+(5)MetaBat2 bins	conda activate gtdbtk-2.1.1						
+	conda env config vars set GTDBTK_DATA_PATH="/home/zhangwen/Data/GTDB/release214/";						
+	gtdbtk check_install						
+	gtdbtk classify_wf  --out_dir ./ --genome_dir Bins/ --skip_ani_screen						
+	gtdbtk convert_to_itol --input some_tree.tree --output itol.tree						
+(6)ANIclustermap	ANIclustermap -i seq -o ./						
+							
+(7)16S	"docker load </home/zhangwen/bin/Docker/parallel-meta-v3.tar
+docker run -it -v /home/zhangwen/project/Time_Data/:/test --privileged=true  parallel-meta:v3
+export ParallelMETA=""/parallel-meta/""
+export PATH=""$PATH:$ParallelMETA/bin""
+PM-pipeline -i Seq.list -m meta.txt -o parallel -L 123456"						
+							
+							
+							
+(8)画图 双峰图	"library(ggplot2)
+otu <- read.table(""Prevotella_China_HMP.txt"",header = T, row.names = 1,sep=""\t"")
+p1<-ggplot(data=otu,aes(x=log10(Prevotella),fill=Group))+geom_density(alpha=0.2)
+ggsave(paste(""HMP_China_Prevotealla.pdf"", sep=""""), p1, width = 15, height = 10)"						
+line图	"otu <- read.table(matrixfile,header = T, row.names = 1,sep=""\t"")
+if(is.null(opts$overturn)==F) {otu<-otu}else{otu<-t(otu)}
+otu <- otu[order(otu$Time), ]
+p<-ggplot(data=otu,aes(x=factor(Time,levels=unique(Time)),y=Percentage,group=Species))+geom_line(aes(color=Species),linewidth=1.5)+geom_point(aes(color=Species),size=4)
+ggsave(paste(outpath,""_line.pdf"", sep=""""), p, width = 36, height = 10)"						
+按个体	"otu <- read.table(matrixfile,header = T, row.names = 1,sep=""\t"")
+if(is.null(opts$overturn)==F) {otu<-otu}else{otu<-t(otu)}
+
+
+otu <- otu[order(otu$Time), ]
+
+p<-ggplot(data=otu,aes(x=factor(Time,levels=unique(Time)),y=Percentage,group=People))+geom_line(aes(color=People),linewidth=1.5)+geom_point(aes(color=People),size=4)
+ggsave(paste(outpath,""_line.pdf"", sep=""""), p, width = 36, height = 10)
+
+p1<-ggplot(data=otu,aes(x=log10(Percentage),fill=People))+geom_density(aes(color=People),alpha=0.3)
+ggsave(paste(outpath,""_abundance.pdf"", sep=""""), p1, width = 15, height = 10)"						
